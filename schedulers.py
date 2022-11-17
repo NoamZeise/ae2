@@ -39,10 +39,18 @@ class SJF(SchedulerDES):
 
 class RR(SchedulerDES):
     def scheduler_func(self, cur_event):
-        pass
+        self.processes[cur_event.process_id].process_state = ProcessStates.READY
+        return self.processes[cur_event.process_id]
 
     def dispatcher_func(self, cur_process):
-        pass
+        cur_process.process_state = ProcessStates.RUNNING
+        time = cur_process.run_for(self.quantum, self.time)
+        if cur_process.remaining_time <= 0:
+            cur_process.process_state = ProcessStates.TERMINATED
+            return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_DONE, event_time=time)
+        else:
+            cur_process.process_state = ProcessStates.NEW
+            return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_REQ, event_time=time)
 
 
 class SRTF(SchedulerDES):
