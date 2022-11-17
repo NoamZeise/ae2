@@ -50,12 +50,29 @@ class RR(SchedulerDES):
             return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_DONE, event_time=time)
         else:
             cur_process.process_state = ProcessStates.NEW
-            return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_REQ, event_time=time)
+            return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_REQ, event_time=time + self.time)
 
 
 class SRTF(SchedulerDES):
     def scheduler_func(self, cur_event):
-        pass
+        max_priority = cur_event
+        for i in range(len(self.events_queue)):
+            if self.events_queue[i].event_time > self.time:
+                break
+            if self.processes[self.events_queue[i].process_id].remaining_time < self.processes[max_priority.process_id].remaining_time:
+                temp = max_priority
+                max_priority = self.events_queue[i]
+                self.events_queue[i] = temp
+        self.processes[max_priority.process_id].process_state = ProcessStates.READY
+        return self.processes[max_priority.process_id]
+
 
     def dispatcher_func(self, cur_process):
-        pass
+        cur_process.process_state = ProcessStates.RUNNING
+        time = cur_process.run_for(self.quantum, self.time)
+        if cur_process.remaining_time <= 0:
+            cur_process.process_state = ProcessStates.TERMINATED
+            return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_DONE, event_time=time)
+        else:
+            cur_process.process_state = ProcessStates.NEW
+            return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_REQ, event_time=time + self.time)
