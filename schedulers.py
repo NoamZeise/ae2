@@ -44,7 +44,10 @@ class RR(SchedulerDES):
 
     def dispatcher_func(self, cur_process):
         cur_process.process_state = ProcessStates.RUNNING
-        time = cur_process.run_for(self.quantum, self.time)
+        run_time = cur_process.remaining_time
+        if self.next_event_time() - self.time < cur_process.remaining_time:
+            run_time = self.next_event_time() - self.time
+        time = cur_process.run_for(run_time, self.time)
         if cur_process.remaining_time <= 0:
             cur_process.process_state = ProcessStates.TERMINATED
             return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_DONE, event_time=time)
@@ -69,7 +72,10 @@ class SRTF(SchedulerDES):
 
     def dispatcher_func(self, cur_process):
         cur_process.process_state = ProcessStates.RUNNING
-        time = cur_process.run_for(self.quantum, self.time)
+        run_time = cur_process.remaining_time
+        if self.next_event_time() - self.time < cur_process.remaining_time:
+            run_time = self.next_event_time() - self.time
+        time = cur_process.run_for(run_time, self.time)
         if cur_process.remaining_time <= 0:
             cur_process.process_state = ProcessStates.TERMINATED
             return Event(process_id=cur_process.process_id, event_type=EventTypes.PROC_CPU_DONE, event_time=time)
